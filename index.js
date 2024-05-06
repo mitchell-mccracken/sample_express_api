@@ -1,13 +1,15 @@
 const express = require( 'express' );
 const app = express();
-const port = 3300;
 const cors = require( 'cors' );
 const bodyParser = require( 'body-parser' );
+
+// env file
+require( 'dotenv' ).config();
+const port = process.env.PORT;
 
 
 app.use( bodyParser.urlencoded( { extended:true, limit: '5mb' } ) );
 app.use( bodyParser.json( { limit: '5mb' } ) );
-
 
 app.use( cors( {
   origin: [
@@ -29,9 +31,12 @@ app.post( '/createUser', ( req, res ) => {
     message: 'good',
     token: Date.now(),
   };
-  
   res.send( { data } );
 } );
+
+
+// link to high level routes
+app.use( '/api', require( './controllers/routes' ) );
 
 
 
