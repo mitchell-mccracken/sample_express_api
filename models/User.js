@@ -25,8 +25,6 @@ const schema = new mongoose.Schema( {
 
 } );
 
-// const connection = dbConfig.GetShopConnection();
-// const model = connection.model("user", schema);
 
 const connection = mongoose.createConnection( process.env.MONGODB_SHOP_URL )
 const model = connection.model('user', schema);
