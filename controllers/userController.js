@@ -1,6 +1,7 @@
 const express = require( 'express' );
 const router = express.Router();
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 
 const User = require( '../models/User' );
 const secretKey = process.env.SECRET_KEY;
@@ -18,15 +19,17 @@ router.post( '/fetchUserName', fetchUserName );
 
 async function createUser( req, res ) {
   try {
+
+    // this is assuming the password is already encrypted
     
     // TODO: ensure passwords are encrypted and decrypted
     const { userName, password, rePassword, email } = req.body;
 
-    // check that passwords match
-    if ( password !== rePassword ) {
-      const error = 'passwords do not match';
-      throw error;
-    }
+    // check that passwords match - add back in
+    // if ( password !== rePassword ) {
+    //   const error = 'passwords do not match';
+    //   throw error;
+    // }
 
     // check if user exists
     const query = {
@@ -77,8 +80,19 @@ async function createUser( req, res ) {
 async function userLogin( req, res ) {
   try {
 
-    const { userName, password, rePassword, userId } = req.body;
+    const { userName, password } = req.body;
 
+    const user = await User.findOne({ userName })
+      .lean()
+      .exec();
+
+
+    const loginSuccessful = await bcrypt.compareSync( password, user.password );
+  
+    if ( !loginSuccessful ) {
+      res.status( 500 ).send( 'password or username incorrect' );
+      return;
+    }
 
     const token = jwt.sign(
       { userId: 'user._id' },
@@ -88,10 +102,10 @@ async function userLogin( req, res ) {
 
     const data = {
       message: 'good',
-      token: Date.now(),
+      token
     };
 
-    res.send( { data } );
+    res.send( data );
   } 
   catch (error) {
     console.error( error );
@@ -112,6 +126,7 @@ async function fetchUserName( req, res ) {
     if ( !user ) {
       const err = 'User could not be found';
       res.status(404).send(err);
+      return;
     }
 
     const data = { 
