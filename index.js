@@ -2,6 +2,7 @@ const express = require( 'express' );
 const app = express();
 const cors = require( 'cors' );
 const bodyParser = require( 'body-parser' );
+const cookieParser = require('cookie-parser');
 
 // env file
 require( 'dotenv' ).config();
@@ -11,11 +12,17 @@ const port = process.env.PORT;
 app.use( bodyParser.urlencoded( { extended:true, limit: '5mb' } ) );
 app.use( bodyParser.json( { limit: '5mb' } ) );
 
+app.use(express.json());    // needed?
+app.use(cookieParser());    // needed?
+
 app.use( cors( {
   origin: [
     'http://localhost:3000',
-    'https://localhost:3000'
-  ]
+    'https://localhost:3000',
+    'http://localhost:3000/*',    // TODO: do I need this?
+    'https://localhost:3000/*',   // TODO: do I need this?
+  ],
+  credentials: true,    // for some reason this is needed to send cookies
 } ) );
 
 app.get( '/', ( req, res) => {
