@@ -7,10 +7,14 @@ const User = require( '../models/User' );
 const secretKey = process.env.SECRET_KEY;
 
 
+
+// GLOBALS
+const MAX_AGE = 1000*60*60;    // 5 minutes
+
 // ROUTES
 router.post( '/create', createUser );
 router.post( '/login', userLogin );
-router.post( '/fetchUserName', fetchUserName );
+router.get( '/fetchUserName/:userId', fetchUserName );
 
 
 
@@ -105,6 +109,12 @@ async function userLogin( req, res ) {
       token
     };
 
+
+    // set cookie values
+    // TODO: change to an expires value
+    res.cookie( 'mitch_test_app_token', token, { maxAge: MAX_AGE } );
+    res.cookie( 'mitch_test_app_uid', user._id.toString(), { maxAge: MAX_AGE } );
+
     res.send( data );
   } 
   catch (error) {
@@ -116,9 +126,18 @@ async function userLogin( req, res ) {
 async function fetchUserName( req, res ) {
   try {
     console.log('----------------- fetchUserName --------------------------');
-    const { token } = req.body;
 
-    const user = await User.findOne( { token } )
+    const { userId } = req.params
+
+    if ( !userId || userId === 'undefined' ) {
+      const data = {
+        'redirect': '/login'
+      }
+      res.send( data );
+      return
+    }
+
+    const user = await User.findOne( { _id: userId } )
       .lean()
       .exec();
 
