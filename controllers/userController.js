@@ -6,6 +6,9 @@ const bcrypt = require('bcryptjs');
 const User = require( '../models/User' );
 const secretKey = process.env.SECRET_KEY;
 
+const { Client } = require( 'square' );
+const { randomUUID } = require( 'crypto' );
+
 
 
 // GLOBALS
@@ -15,6 +18,11 @@ const MAX_AGE = 1000*60*60;    // 5 minutes
 router.post( '/create', createUser );
 router.post( '/login', userLogin );
 router.get( '/fetchUserName/:userId', fetchUserName );
+
+
+router.post( '/payment', testPayment );
+
+BigInt.prototype.toJSON = function() { return this.toString(); }
 
 
 
@@ -153,6 +161,38 @@ async function fetchUserName( req, res ) {
       userName: user.userName
     };
     res.send( data );
+  } 
+  catch (error) {
+    console.error( error );
+    res.status(500).send(error);
+  }
+}
+
+
+async function testPayment( req, res ) {
+  try {
+
+    if ( !req.body?.sourceId ) {
+      res.status(501).send('no sourceId')
+    }
+
+    const { paymentsApi } = new Client({
+      accessToken: process.env.SQUARE_ACCESS_TOKEN,
+      environment: 'sandbox'
+    });
+
+    const { result } = await paymentsApi.createPayment({
+      idempotencyKey: randomUUID(),
+      sourceId: req.body.sourceId,
+      amountMoney: {
+        currency: 'USD',
+        amount: 100
+      }
+    });
+
+    console.log(result);
+    res.status(200).json(result);
+    
   } 
   catch (error) {
     console.error( error );
